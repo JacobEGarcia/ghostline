@@ -1,0 +1,10 @@
+{
+  "name": "GHOSTLINE - Local Uplink",
+  "short_name": "GHOSTLINE",
+  "description": "Fully local, uncensored chat uplink for Ollama and LM Studio.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0908",
+  "theme_color": "#0a0908",
+  "icons": [{"src":"icon.png","sizes":"512x512","type":"image/png"}]
+}
