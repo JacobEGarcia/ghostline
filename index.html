@@ -172,6 +172,7 @@ textarea{flex:1;background:#0d0b07;border:1px solid var(--line);color:var(--text
       <h3>Parameters</h3>
       <div class="slider"><label>Temp</label><input type="range" id="temp" min="0" max="150" value="80"><output id="tempo">0.80</output></div>
       <div class="slider"><label>Context</label><input type="range" id="ctx" min="2048" max="32768" step="2048" value="8192"><output id="ctxo">8192</output></div>
+      <div class="slider"><label>Thinking</label><input type="checkbox" id="showthink" style="accent-color:#ffb000"><output style="text-align:left;width:auto;color:var(--text-dim)">show</output></div>
     </div>
     <div class="section" style="flex:1;border-bottom:none">
       <h3>Sessions</h3>
@@ -269,6 +270,15 @@ function renderList(){
   });
 }
 function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function stripThink(s){
+  if($("showthink")&&$("showthink").checked)return s;
+  let out=s;
+  out=out.replace(/^\s*(?:Thinking Process|Here'?s a thinking process[^:\n]*)[:\n][\s\S]*?<\/think>/i,"");
+  out=out.replace(/<think>[\s\S]*?<\/think>/gi,"");
+  out=out.replace(/^\s*(?:Thinking Process|Here'?s a thinking process)[\s\S]*?\n\n/i,"");
+  out=out.replace(/<\/think>/gi,"");
+  return out.trim();
+}
 function mdLite(s){
   let h=escapeHtml(s);
   h=h.replace(/```(\w*)\n([\s\S]*?)```/g,(m,l,c)=>"<pre><code>"+c.replace(/\n$/,"")+"</code></pre>");
@@ -285,7 +295,7 @@ function renderChat(){
     const d=document.createElement("div");
     d.className="msg "+(m.role==="user"?"user":"ai");
     d.innerHTML='<div class="who">'+(m.role==="user"?"YOU":"GHOST")+'</div><div class="body">'
-      +(m.role==="user"?escapeHtml(m.content):mdLite(m.content))+"</div>"
+      +(m.role==="user"?escapeHtml(m.content):mdLite(stripThink(m.content)))+"</div>"
       +(m.meta?'<div class="meta">'+m.meta+"</div>":"");
     el.appendChild(d);
   });
@@ -425,11 +435,11 @@ function updateStream(aiMsg){
   const el=$("messages");
   const last=el.lastElementChild;
   if(last&&last.classList.contains("ai")){
-    last.querySelector(".body").innerHTML=mdLite(aiMsg.content);
+    last.querySelector(".body").innerHTML=mdLite(stripThink(aiMsg.content));
   }else{
     const d=document.createElement("div");
     d.className="msg ai";
-    d.innerHTML='<div class="who">GHOST</div><div class="body">'+mdLite(aiMsg.content)+"</div>";
+    d.innerHTML='<div class="who">GHOST</div><div class="body">'+mdLite(stripThink(aiMsg.content))+"</div>";
     el.appendChild(d);
   }
   el.scrollTop=el.scrollHeight;
@@ -450,6 +460,7 @@ $("model").onchange=()=>hdr($("model").value,null,$("ctx").value);
 $("persona").onchange=()=>{$("sysbox").style.display=$("persona").value==="custom"?"block":"none";};
 $("temp").oninput=()=>$("tempo").textContent=(parseInt($("temp").value)/100).toFixed(2);
 $("ctx").oninput=()=>{$("ctxo").textContent=$("ctx").value;hdr($("model").value,null,$("ctx").value);};
+$("showthink").onchange=renderChat;
 $("export").onclick=()=>{
   const c=cur(); if(!c)return;
   let md="# GHOSTLINE transcript — "+titleOf(c)+"\n\n";
